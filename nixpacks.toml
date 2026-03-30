@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["ffmpeg", "gcc"]
-
-[phases.install]
-cmds = ["pip install numpy scipy tqdm google-auth google-auth-oauthlib google-api-python-client"]
-
-[start]
-cmd = "python flasher_uploader_v2.py"
