@@ -1,0 +1,6 @@
+client_secrets.json
+token.json
+output_videos/
+*.mp4
+*.wav
+*.log
