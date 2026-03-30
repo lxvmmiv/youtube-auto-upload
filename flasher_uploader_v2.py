@@ -109,19 +109,40 @@ def generate_video(output_path):
 
 
 def get_youtube_service():
+    import json, tempfile
     if not GOOGLE_AVAILABLE:
         raise RuntimeError("Google API libraries not installed.")
-    if not os.path.exists(CLIENT_SECRETS):
-        raise FileNotFoundError(f"'{CLIENT_SECRETS}' not found.")
-    creds = None
-    if os.path.exists(TOKEN_FILE):
+
+    # Load credentials from environment variables (Railway) or local files (Mac)
+    client_secrets_str = os.environ.get("CLIENT_SECRETS")
+    token_str          = os.environ.get("GOOGLE_TOKEN")
+
+    if client_secrets_str:
+        # Write env var contents to temp files
+        tmp_secrets = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+        tmp_secrets.write(client_secrets_str); tmp_secrets.flush()
+        secrets_path = tmp_secrets.name
+    elif os.path.exists(CLIENT_SECRETS):
+        secrets_path = CLIENT_SECRETS
+    else:
+        raise FileNotFoundError("No client_secrets.json or CLIENT_SECRETS env var found.")
+
+    if token_str:
+        creds = Credentials.from_authorized_user_info(json.loads(token_str), SCOPES)
+    elif os.path.exists(TOKEN_FILE):
         creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    else:
+        creds = None
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
+            # Update the env var value in token.json for local use
+            if not token_str:
+                open(TOKEN_FILE, "w").write(creds.to_json())
         else:
-            creds = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS, SCOPES).run_local_server(port=0)
-        open(TOKEN_FILE, "w").write(creds.to_json())
+            creds = InstalledAppFlow.from_client_secrets_file(secrets_path, SCOPES).run_local_server(port=0)
+            open(TOKEN_FILE, "w").write(creds.to_json())
     return build("youtube", "v3", credentials=creds)
 
 
