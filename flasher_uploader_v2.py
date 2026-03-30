@@ -275,7 +275,7 @@ def upload_to_youtube(path, youtube):
 def main():
     log.info("=== Flashing Video Generator + YouTube Uploader ===")
     youtube = None
-    if GOOGLE_AVAILABLE and os.path.exists(CLIENT_SECRETS):
+    if GOOGLE_AVAILABLE and (os.path.exists(CLIENT_SECRETS) or os.environ.get("CLIENT_SECRETS")):
         try:
             youtube = get_youtube_service(); log.info("YouTube authenticated.")
         except Exception as e:
